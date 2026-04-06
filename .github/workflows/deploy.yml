@@ -1,4 +1,4 @@
-name: 🚀 Deploy via FTP
+name: Deploy to Hosting
 
 on:
   push:
@@ -6,17 +6,19 @@ on:
       - main
 
 jobs:
-  ftp-deploy:
+  deploy:
+    name: Upload to Hosting
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy to Hostinger via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Upload via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: 21
-          server-dir: /public_html/
+          local-dir: ./
+          server-dir: public_html/
