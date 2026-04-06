@@ -1,3 +1,3 @@
 <?php
-    die('dasdasdasd');
+    die('donald is an idiot');
 ?>
