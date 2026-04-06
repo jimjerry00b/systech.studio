@@ -1,3 +1,3 @@
 <?php
-    die('ddddddddd');
+    die('dasdasdasd');
 ?>
