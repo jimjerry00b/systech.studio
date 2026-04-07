@@ -1,3 +1,3 @@
 <?php
-    die('donald dasdsa');
+    echo phpinfo();
 ?>
