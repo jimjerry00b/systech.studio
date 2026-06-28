@@ -2,10 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\LoginRequest;
+use App\Services\LoginService;
+use Exception;
 
 class AdminController extends Controller
 {
+
+    protected LoginService $service;
+
+    function __construct(LoginService $service)
+    {
+        $this->service = $service;
+    }
 
     public function dashboard()
     {
@@ -19,9 +28,14 @@ class AdminController extends Controller
         return view('pages.login');
     }
 
-    public function loginPost(Request $request)
+    public function loginPost(LoginRequest $request)
     {
-        die('post data');
+        try{
+            $this->service->login($request);
+            return redirect()->route('dashboard')->with('message', 'Login Sucessful');
+        }catch(Exception $e){
+            return redirect()->back()->with('error', 'Credential not matched');
+        }
     }
 
 }

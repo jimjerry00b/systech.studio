@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->integer('role_id')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_deletable')->default(true);
+            $table->string('image_path', 2048)->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
