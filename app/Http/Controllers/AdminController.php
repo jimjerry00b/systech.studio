@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Services\LoginService;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class AdminController extends Controller
 {
@@ -18,8 +19,7 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        echo "Welcome to the Admin Dashboard!";
-        exit();
+        return view('dashboard.home');
     }
 
     public function login()
@@ -35,6 +35,12 @@ class AdminController extends Controller
         }catch(Exception $e){
             return redirect()->back()->with('error', 'Credential not matched');
         }
+    }
+
+    
+    public function logout(){
+        Auth::logout();
+        return redirect()->route('login')->with('message', 'Login out successful');
     }
 
 }
