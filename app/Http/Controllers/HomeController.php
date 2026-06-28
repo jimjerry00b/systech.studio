@@ -23,4 +23,8 @@ class HomeController extends Controller
             'featuredProjects' => $featuredProjects,
         ]);
     }
+    
+    public function landingPage(){
+        return view('landingpage');
+    }
 }

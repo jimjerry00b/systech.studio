@@ -8,6 +8,7 @@ use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+Route::get('/landing-page', [HomeController::class, 'landingPage'])->name('landing.page');
 
 Route::get('/about', AboutController::class)->name('about');
 
