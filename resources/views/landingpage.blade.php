@@ -35,7 +35,7 @@ $featured = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>test MovieBox — Watch Movies & Shows</title>
+    <title>MovieBox — Watch Movies & Shows</title>
 
     <!-- Tailwind CSS (Play CDN — no build step required) -->
     <script src="https://cdn.tailwindcss.com"></script>
