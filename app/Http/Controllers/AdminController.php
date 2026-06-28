@@ -20,7 +20,6 @@ class AdminController extends Controller
     {
         echo "Welcome to the Admin Dashboard!";
         exit();
-        //return view('admin.dashboard');
     }
 
     public function login()
