@@ -220,14 +220,16 @@
                                                 @php
                                                     // Normalised to international format (country code, no leading 0).
                                                     $waPhone = $house->whatsappPhone();
-                                                    $waText = 'Hi ' . $house->name . ', your bill for ' . $bill->period->format('F Y')
+                                                    $waText = 'Hi ' . $house->name . ",\n"
+                                                        . 'Your bill for ' . $bill->period->format('F Y')
                                                         . ' is $' . number_format($bill->total, 0)
                                                         . ' (Rent $' . number_format($bill->rent, 0)
                                                         . ' + Water $' . number_format($bill->water, 0)
                                                         . ' + Electricity $' . number_format($bill->electricity, 0) . '). '
                                                         . ($bill->status === 'paid'
-                                                            ? 'Payment received — thank you!'
-                                                            : 'Kindly clear the outstanding amount. Thank you.');
+                                                            ? 'Payment received.'
+                                                            : 'Kindly clear the outstanding amount.')
+                                                        . "\nThank you.";
                                                 @endphp
                                                 <a href="https://wa.me/{{ $waPhone }}?text={{ rawurlencode($waText) }}"
                                                     target="_blank" rel="noopener"
