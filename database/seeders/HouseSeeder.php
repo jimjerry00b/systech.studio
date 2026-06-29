@@ -15,7 +15,7 @@ class HouseSeeder extends Seeder
     {
         $house = House::create([
             'name' => 'Brandon Jacob',
-            'phone' => '+254 712 345 678',
+            'phone' => '01712-345678',
             'email' => 'brandon@example.com',
             'unit' => 'House A-12',
             'rent_amount' => 650,
@@ -24,8 +24,6 @@ class HouseSeeder extends Seeder
             'electric_meter_number' => 'EM-0098-4521',
             'electric_account_number' => 'ACC-77310-002',
             'gas_meter_number' => 'GM-5530-118',
-            'water_meter_number' => 'WM-4471',
-            'water_account_number' => 'WASA-220194',
             'lease_start' => '2026-01-01',
             'lease_end' => '2026-12-31',
             'status' => 'active',

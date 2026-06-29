@@ -15,11 +15,10 @@ class House extends Model
         'rent_amount',
         'water_amount',
         'security_deposit',
+        'advance_amount',
         'electric_meter_number',
         'electric_account_number',
         'gas_meter_number',
-        'water_meter_number',
-        'water_account_number',
         'lease_start',
         'lease_end',
         'status',
@@ -31,6 +30,7 @@ class House extends Model
             'rent_amount' => 'decimal:2',
             'water_amount' => 'decimal:2',
             'security_deposit' => 'decimal:2',
+            'advance_amount' => 'decimal:2',
             'lease_start' => 'date',
             'lease_end' => 'date',
         ];
@@ -51,5 +51,29 @@ class House extends Model
     public function outstanding(): float
     {
         return (float) $this->bills->where('status', 'unpaid')->sum('total');
+    }
+
+    /**
+     * Renter phone formatted for a wa.me / WhatsApp link: digits only,
+     * in international format (country code, no leading zero). Returns an
+     * empty string when no phone is set.
+     */
+    public function whatsappPhone(): string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $this->phone);
+
+        if ($digits === '') {
+            return '';
+        }
+
+        $countryCode = (string) config('whatsapp.country_code', '880');
+
+        // Already in international form (starts with the country code).
+        if (str_starts_with($digits, $countryCode)) {
+            return $digits;
+        }
+
+        // Local form (e.g. 01712...) -> drop leading zero(s), prepend code.
+        return $countryCode . ltrim($digits, '0');
     }
 }

@@ -112,11 +112,6 @@
                             <div class="col-lg-9 col-md-8">{{ $house->gas_meter_number ?: '—' }}</div>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-lg-3 col-md-4 label fw-bold">Water Meter / Account</div>
-                            <div class="col-lg-9 col-md-8">{{ $house->water_meter_number ?: '—' }} &middot; {{ $house->water_account_number ?: '—' }}</div>
-                        </div>
-
                         <hr>
 
                         <div class="row mb-3">
@@ -192,12 +187,31 @@
                                             @endif
                                         </td>
                                         <td class="text-end">
+                                            @if ($house->phone)
+                                                @php
+                                                    // Normalised to international format (country code, no leading 0).
+                                                    $waPhone = $house->whatsappPhone();
+                                                    $waText = 'Hi ' . $house->name . ', your bill for ' . $bill->period->format('F Y')
+                                                        . ' is $' . number_format($bill->total, 0)
+                                                        . ' (Rent $' . number_format($bill->rent, 0)
+                                                        . ' + Water $' . number_format($bill->water, 0)
+                                                        . ' + Electricity $' . number_format($bill->electricity, 0) . '). '
+                                                        . ($bill->status === 'paid'
+                                                            ? 'Payment received — thank you!'
+                                                            : 'Kindly clear the outstanding amount. Thank you.');
+                                                @endphp
+                                                <a href="https://wa.me/{{ $waPhone }}?text={{ rawurlencode($waText) }}"
+                                                    target="_blank" rel="noopener"
+                                                    class="btn btn-sm btn-outline-success" title="Send bill via WhatsApp">
+                                                    <i class="bi bi-whatsapp"></i>
+                                                </a>
+                                            @endif
                                             @if ($bill->status !== 'paid')
                                                 <form action="{{ route('bills.update', $bill) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     @method('PATCH')
                                                     <input type="hidden" name="status" value="paid">
-                                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as paid"><i class="bi bi-check-lg"></i></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Mark as paid"><i class="bi bi-check-lg"></i></button>
                                                 </form>
                                             @endif
                                             <form action="{{ route('bills.destroy', $bill) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this bill?');">
@@ -296,7 +310,7 @@
                             <div class="col-md-4">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Advance Balance</div>
-                                    <div class="fs-4 fw-bold text-success">$1,300</div>
+                                    <div class="fs-4 fw-bold text-success">${{ number_format($house->advance_amount, 0) }}</div>
                                     <div class="text-muted small">Credit available</div>
                                 </div>
                             </div>

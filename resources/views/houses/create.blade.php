@@ -54,7 +54,7 @@
                             <h6 class="text-muted text-uppercase small mb-3">House &amp; Charges</h6>
 
                             <div class="row g-3 mb-3">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label">House / Unit <span class="text-danger">*</span></label>
                                     <input type="text" name="unit" class="form-control @error('unit') is-invalid @enderror" value="{{ old('unit') }}" placeholder="e.g. House A-12" required>
                                     @error('unit') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -83,6 +83,14 @@
                                     </div>
                                     @error('security_deposit') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                 </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Advance Money</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" name="advance_amount" class="form-control @error('advance_amount') is-invalid @enderror" value="{{ old('advance_amount', 0) }}" min="0" step="0.01">
+                                    </div>
+                                    @error('advance_amount') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                </div>
                             </div>
 
                             <hr>
@@ -100,14 +108,6 @@
                                 <div class="col-md-4">
                                     <label class="form-label">Gas Meter Number</label>
                                     <input type="text" name="gas_meter_number" class="form-control" value="{{ old('gas_meter_number') }}">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Water Meter Number</label>
-                                    <input type="text" name="water_meter_number" class="form-control" value="{{ old('water_meter_number') }}">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Water / WASA Account Number</label>
-                                    <input type="text" name="water_account_number" class="form-control" value="{{ old('water_account_number') }}">
                                 </div>
                             </div>
 

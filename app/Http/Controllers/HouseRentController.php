@@ -38,6 +38,7 @@ class HouseRentController extends Controller
             'rent_amount' => ['required', 'numeric', 'min:0'],
             'water_amount' => ['required', 'numeric', 'min:0'],
             'security_deposit' => ['nullable', 'numeric', 'min:0'],
+            'advance_amount' => ['nullable', 'numeric', 'min:0'],
             'electric_meter_number' => ['nullable', 'string', 'max:255'],
             'electric_account_number' => ['nullable', 'string', 'max:255'],
             'gas_meter_number' => ['nullable', 'string', 'max:255'],
@@ -49,6 +50,7 @@ class HouseRentController extends Controller
         ]);
 
         $validated['security_deposit'] = $validated['security_deposit'] ?? 0;
+        $validated['advance_amount'] = $validated['advance_amount'] ?? 0;
 
         $house = House::create($validated);
 
