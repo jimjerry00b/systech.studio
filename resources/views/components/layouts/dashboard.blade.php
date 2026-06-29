@@ -19,10 +19,10 @@
     <!-- Vendor CSS Files (CDN) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3/dist/style.css" rel="stylesheet">
 
     <!-- Local theme files -->
-    <link href="{{ asset('assets/vendor/simple-datatables/style.css') }}?v={{ time() }}" rel="stylesheet">
-    <link href="{{ asset('assets/css/style.css') }}?v={{ time() }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/style.css') }}?v={{ filemtime(public_path('assets/css/style.css')) }}" rel="stylesheet">
 </head>
 
 <body>
@@ -330,7 +330,7 @@
     <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3/dist/umd/simple-datatables.js"></script>
 
     <!-- Template Main JS File -->
-    <script src="{{ asset('assets/js/main.js') }}"></script>
+    <script src="{{ asset('assets/js/main.js') }}?v={{ filemtime(public_path('assets/js/main.js')) }}"></script>
     @yield('scripts')
 </body>
 
