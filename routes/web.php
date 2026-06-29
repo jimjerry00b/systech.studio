@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\BillController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HouseRentController;
@@ -34,4 +35,7 @@ Route::middleware('admin')->group(function(){
     Route::get('/logout', [AdminController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::resource('houses', HouseRentController::class);
+    Route::resource('houses.bills', BillController::class)
+        ->shallow()
+        ->only(['store', 'update', 'destroy']);
 });

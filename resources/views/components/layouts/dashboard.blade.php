@@ -284,13 +284,24 @@
             </li>
 
             <li class="nav-item">
-                <a class="nav-link {{ Request::segment(1) != 'house' ? 'collapsed' : '' }}"
-                href="{{ route('houses.index') }}">
+                <a class="nav-link {{ Request::segment(1) != 'houses' ? 'collapsed' : '' }}"
+                    data-bs-target="#house-nav" data-bs-toggle="collapse" href="#">
                     <i class="bi bi-grid"></i>
                     <span>House Rents</span>
+                    <i class="bi bi-chevron-down ms-auto"></i>
                 </a>
+                <ul id="house-nav"
+                    class="nav-content collapse {{ Request::segment(1) == 'houses' ? 'show' : '' }}"
+                    data-bs-parent="#sidebar-nav">
+                    <li>
+                        <a href="{{ route('houses.index') }}"
+                            class="{{ Request::segment(1) == 'houses' ? 'active' : '' }}">
+                            <i class="bi bi-circle"></i><span>View</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
-`
+
         </ul>
 
     </aside><!-- End Sidebar-->

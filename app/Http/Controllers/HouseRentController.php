@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\House;
 use Illuminate\Http\Request;
 
 class HouseRentController extends Controller
@@ -11,7 +12,9 @@ class HouseRentController extends Controller
      */
     public function index()
     {
-        //
+        $houses = House::latest()->get();
+
+        return view('houses.index', compact('houses'));
     }
 
     /**
@@ -19,7 +22,7 @@ class HouseRentController extends Controller
      */
     public function create()
     {
-        //
+        return view('houses.create');
     }
 
     /**
@@ -27,21 +30,47 @@ class HouseRentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'unit' => ['required', 'string', 'max:255'],
+            'rent_amount' => ['required', 'numeric', 'min:0'],
+            'water_amount' => ['required', 'numeric', 'min:0'],
+            'security_deposit' => ['nullable', 'numeric', 'min:0'],
+            'electric_meter_number' => ['nullable', 'string', 'max:255'],
+            'electric_account_number' => ['nullable', 'string', 'max:255'],
+            'gas_meter_number' => ['nullable', 'string', 'max:255'],
+            'water_meter_number' => ['nullable', 'string', 'max:255'],
+            'water_account_number' => ['nullable', 'string', 'max:255'],
+            'lease_start' => ['nullable', 'date'],
+            'lease_end' => ['nullable', 'date', 'after_or_equal:lease_start'],
+            'status' => ['required', 'in:active,pending,expired'],
+        ]);
+
+        $validated['security_deposit'] = $validated['security_deposit'] ?? 0;
+
+        $house = House::create($validated);
+
+        return redirect()
+            ->route('houses.show', $house)
+            ->with('message', 'Renter “' . $house->name . '” added.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(House $house)
     {
-        //
+        $house->load('bills');
+
+        return view('houses.show', compact('house'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(House $house)
     {
         //
     }
@@ -49,7 +78,7 @@ class HouseRentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, House $house)
     {
         //
     }
@@ -57,8 +86,12 @@ class HouseRentController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(House $house)
     {
-        //
+        $house->delete();
+
+        return redirect()
+            ->route('houses.index')
+            ->with('message', 'Renter removed.');
     }
 }
