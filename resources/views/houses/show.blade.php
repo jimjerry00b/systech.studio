@@ -34,6 +34,26 @@
         $totalPaid = $paidBills->sum('total');
         $paidCount = $paidBills->count();
         $nextDue = $bills->where('status', 'unpaid')->sortBy('period')->first();
+
+        // WhatsApp summary covering every generated bill for this renter.
+        $waSummaryPhone = $house->whatsappPhone();
+        $waSummaryLines = [];
+        foreach ($bills as $b) {
+            $waSummaryLines[] = '- ' . $b->period->format('M Y')
+                . ': Rent $' . number_format($b->rent, 0)
+                . ' + Water $' . number_format($b->water, 0)
+                . ' + Electricity $' . number_format($b->electricity, 0)
+                . ' = $' . number_format($b->total, 0)
+                . ' (' . ($b->status === 'paid' ? 'Paid' : 'Unpaid') . ')';
+        }
+        $waSummaryText = 'Hi ' . $house->name . ', here is your billing summary for ' . $house->unit . ":\n\n"
+            . implode("\n", $waSummaryLines)
+            . "\n\nTotal billed: $" . number_format($totalBilled, 0)
+            . "\nTotal paid: $" . number_format($totalPaid, 0)
+            . "\nOutstanding: $" . number_format($outstanding, 0)
+            . ($outstanding > 0
+                ? "\n\nKindly clear the outstanding amount. Thank you."
+                : "\n\nAll bills are cleared — thank you!");
     @endphp
 
     <section class="section profile">
@@ -127,9 +147,18 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center pt-3 mb-1">
                             <h5 class="card-title p-0 m-0">Monthly Bills <span>| Total Due</span></h5>
-                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#generateBillModal">
-                                <i class="bi bi-receipt me-1"></i> Generate Bill
-                            </button>
+                            <div class="d-flex gap-2">
+                                @if ($house->phone && $bills->isNotEmpty())
+                                    <a href="https://wa.me/{{ $waSummaryPhone }}?text={{ rawurlencode($waSummaryText) }}"
+                                        target="_blank" rel="noopener"
+                                        class="btn btn-outline-success btn-sm" title="Send full bill summary via WhatsApp">
+                                        <i class="bi bi-whatsapp me-1"></i> Send Summary
+                                    </a>
+                                @endif
+                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#generateBillModal">
+                                    <i class="bi bi-receipt me-1"></i> Generate Bill
+                                </button>
+                            </div>
                         </div>
                         <p class="text-muted small mb-3">Rent and WASA water are fixed each month; electricity varies by usage.</p>
 
