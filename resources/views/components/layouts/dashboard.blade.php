@@ -22,7 +22,7 @@
     <link href="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3/dist/style.css" rel="stylesheet">
 
     <!-- Local theme files -->
-    <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
+    <link href="{{ asset('public/assets/css/style.css') }}" rel="stylesheet">
 </head>
 
 <body>
