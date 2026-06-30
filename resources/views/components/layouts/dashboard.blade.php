@@ -335,7 +335,11 @@
     <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3/dist/umd/simple-datatables.js"></script>
 
     <!-- Template Main JS File -->
-    <script src="{{ asset('assets/js/main.js') }}?v={{ filemtime(public_path('assets/js/main.js')) }}"></script>
+    @if (request()->getHost() === 'systech.studio')
+        <script src="{{ asset('/publicassets/js/main.js') }}"></script>
+    @else
+        <script src="{{ asset('assets/js/main.js') }}"></script>
+    @endif
     @yield('scripts')
 </body>
 
