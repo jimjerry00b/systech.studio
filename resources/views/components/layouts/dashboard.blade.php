@@ -336,11 +336,11 @@
 
     <!-- Template Main JS File -->
     @if (request()->getHost() === 'systech.studio')
-        <script src="{{ asset('/publicassets/js/main.js') }}"></script>
+        <script src="{{ asset('/public/assets/js/main.js') }}"></script>
     @else
         <script src="{{ asset('assets/js/main.js') }}"></script>
     @endif
-    
+
     @yield('scripts')
 </body>
 
