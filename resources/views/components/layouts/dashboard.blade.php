@@ -340,6 +340,7 @@
     @else
         <script src="{{ asset('assets/js/main.js') }}"></script>
     @endif
+    
     @yield('scripts')
 </body>
 
