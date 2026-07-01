@@ -40,40 +40,64 @@ class BillController extends Controller
     }
 
     /**
-     * Record a payment for a bill.
-     * Paid amount must be >= bill total; any excess is added to the house's security deposit.
+     * Record a payment for a bill. The bill total is always covered. Part of it
+     * may be paid by deducting from the renter's advance balance and/or security
+     * deposit; the remainder is paid as cash/other. Deductions decrement the
+     * corresponding house balance.
      */
     public function update(Request $request, Bill $bill)
     {
+        $house     = $bill->house;
         $billTotal = (float) $bill->total;
 
         $validated = $request->validate([
-            'paid_amount' => ['required', 'numeric', 'min:' . $billTotal],
-            'method'      => ['nullable', 'string', 'max:255'],
-            'reference'   => ['nullable', 'string', 'max:255'],
+            'advance_used' => ['nullable', 'numeric', 'min:0', 'max:' . (float) $house->advance_amount],
+            'deposit_used' => ['nullable', 'numeric', 'min:0', 'max:' . (float) $house->security_deposit],
+            'method'       => ['nullable', 'string', 'max:255'],
+            'reference'    => ['nullable', 'string', 'max:255'],
         ], [
-            'paid_amount.min' => 'Payment must cover the full bill amount of $' . number_format($billTotal, 0) . '.',
+            'advance_used.max' => 'Amount from advance cannot exceed the available balance of $' . number_format($house->advance_amount, 0) . '.',
+            'deposit_used.max' => 'Amount from deposit cannot exceed the available balance of $' . number_format($house->security_deposit, 0) . '.',
         ]);
 
-        $overpayment = round((float) $validated['paid_amount'] - $billTotal, 2);
+        $advanceUsed = round((float) ($validated['advance_used'] ?? 0), 2);
+        $depositUsed = round((float) ($validated['deposit_used'] ?? 0), 2);
 
-        $bill->update([
-            'status'      => 'paid',
-            'paid_amount' => $validated['paid_amount'],
-            'method'      => $validated['method'] ?? $bill->method,
-            'reference'   => $validated['reference'] ?? $bill->reference,
-            'paid_at'     => now(),
-        ]);
-
-        $flash = 'Payment of $' . number_format($validated['paid_amount'], 0) . ' recorded.';
-
-        if ($overpayment > 0) {
-            $bill->house->increment('security_deposit', $overpayment);
-            $flash .= ' Overpayment of $' . number_format($overpayment, 0) . ' added to security deposit.';
+        if ($advanceUsed + $depositUsed > $billTotal) {
+            return back()->withErrors([
+                'advance_used' => 'Advance + deposit ($' . number_format($advanceUsed + $depositUsed, 0)
+                    . ') cannot exceed the bill total of $' . number_format($billTotal, 0) . '.',
+            ]);
         }
 
+        $bill->update([
+            'status'       => 'paid',
+            'paid_amount'  => $billTotal,
+            'advance_used' => $advanceUsed,
+            'deposit_used' => $depositUsed,
+            'method'       => $validated['method'] ?? null,
+            'reference'    => $validated['reference'] ?? null,
+            'paid_at'      => now(),
+        ]);
+
+        if ($advanceUsed > 0) {
+            $house->decrement('advance_amount', $advanceUsed);
+        }
+        if ($depositUsed > 0) {
+            $house->decrement('security_deposit', $depositUsed);
+        }
+
+        $cash  = round($billTotal - $advanceUsed - $depositUsed, 2);
+        $parts = [];
+        if ($cash > 0)        $parts[] = '$' . number_format($cash, 0) . ' cash/other';
+        if ($advanceUsed > 0) $parts[] = '$' . number_format($advanceUsed, 0) . ' from advance';
+        if ($depositUsed > 0) $parts[] = '$' . number_format($depositUsed, 0) . ' from deposit';
+
+        $flash = 'Bill for ' . $bill->period->format('F Y') . ' marked paid'
+            . (count($parts) ? ' (' . implode(', ', $parts) . ')' : '') . '.';
+
         return redirect()
-            ->route('houses.show', $bill->house_id)
+            ->route('houses.show', $house)
             ->with('message', $flash);
     }
 

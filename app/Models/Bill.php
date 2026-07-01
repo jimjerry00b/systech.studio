@@ -16,6 +16,8 @@ class Bill extends Model
         'electricity',
         'total',
         'paid_amount',
+        'advance_used',
+        'deposit_used',
         'due_date',
         'status',
         'method',
@@ -26,14 +28,16 @@ class Bill extends Model
     protected function casts(): array
     {
         return [
-            'period' => 'date',
-            'due_date' => 'date',
-            'paid_at' => 'date',
-            'rent' => 'decimal:2',
-            'water' => 'decimal:2',
-            'electricity' => 'decimal:2',
-            'total' => 'decimal:2',
-            'paid_amount' => 'decimal:2',
+            'period'        => 'date',
+            'due_date'      => 'date',
+            'paid_at'       => 'date',
+            'rent'          => 'decimal:2',
+            'water'         => 'decimal:2',
+            'electricity'   => 'decimal:2',
+            'total'         => 'decimal:2',
+            'paid_amount'   => 'decimal:2',
+            'advance_used'  => 'decimal:2',
+            'deposit_used'  => 'decimal:2',
         ];
     }
 

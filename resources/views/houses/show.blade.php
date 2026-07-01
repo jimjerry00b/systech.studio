@@ -20,6 +20,17 @@
         </div>
     @endif
 
+    @if ($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     @php
         $statusColors = ['active' => 'success', 'pending' => 'warning', 'expired' => 'danger'];
         $statusColor = $statusColors[$house->status] ?? 'secondary';
@@ -35,6 +46,12 @@
         $totalPaid = $paidBills->sum('total');
         $paidCount = $paidBills->count();
         $nextDue = $bills->where('status', 'unpaid')->sortBy('period')->first();
+
+        // Bills settled wholly or partly from advance balance or security deposit.
+        $deductionBills = $bills->filter(fn($b) =>
+            $b->status === 'paid' && ((float) $b->advance_used > 0 || (float) $b->deposit_used > 0)
+        );
+        $totalApplied = $deductionBills->sum(fn($b) => (float) $b->advance_used + (float) $b->deposit_used);
 
         // WhatsApp summary covering every generated bill for this renter.
         $waSummaryPhone = $house->whatsappPhone();
@@ -332,34 +349,29 @@
                                     <th scope="col">Date Paid</th>
                                     <th scope="col">Period</th>
                                     <th scope="col">Bill Total</th>
-                                    <th scope="col">Paid Amount</th>
-                                    <th scope="col">Overpayment</th>
+                                    <th scope="col">Cash / Other</th>
+                                    <th scope="col">From Advance</th>
+                                    <th scope="col">From Deposit</th>
                                     <th scope="col">Method</th>
-                                    <th scope="col">Reference</th>
                                     <th scope="col">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($paidBills as $bill)
                                     @php
-                                        $paidAmt = (float) ($bill->paid_amount ?? $bill->total);
-                                        $over = max(0, $paidAmt - (float) $bill->total);
+                                        $advUsed  = (float) $bill->advance_used;
+                                        $depUsed  = (float) $bill->deposit_used;
+                                        $cashPaid = max(0, (float) $bill->total - $advUsed - $depUsed);
                                     @endphp
                                     <tr>
                                         <th scope="row">{{ $loop->iteration }}</th>
                                         <td>{{ optional($bill->paid_at)->format('d M Y') ?: '—' }}</td>
                                         <td>{{ $bill->period->format('F Y') }}</td>
                                         <td class="fw-bold">${{ number_format($bill->total, 0) }}</td>
-                                        <td class="fw-bold text-success">${{ number_format($paidAmt, 0) }}</td>
-                                        <td>
-                                            @if ($over > 0)
-                                                <span class="text-info fw-semibold">+${{ number_format($over, 0) }}</span>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
-                                        </td>
+                                        <td>${{ number_format($cashPaid, 0) }}</td>
+                                        <td>{!! $advUsed > 0 ? '<span class="text-primary fw-semibold">−$' . number_format($advUsed, 0) . '</span>' : '<span class="text-muted">—</span>' !!}</td>
+                                        <td>{!! $depUsed > 0 ? '<span class="text-info fw-semibold">−$' . number_format($depUsed, 0) . '</span>' : '<span class="text-muted">—</span>' !!}</td>
                                         <td>{{ $bill->method ?: '—' }}</td>
-                                        <td>{{ $bill->reference ?: '—' }}</td>
                                         <td><span class="badge bg-success">Paid</span></td>
                                     </tr>
                                 @empty
@@ -388,9 +400,9 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="border rounded p-3 h-100">
-                                    <div class="text-muted small text-uppercase">Months Covered</div>
-                                    <div class="fs-4 fw-bold">2 months</div>
-                                    <div class="text-muted small">Aug &ndash; Sep 2026</div>
+                                    <div class="text-muted small text-uppercase">Balance Applied</div>
+                                    <div class="fs-4 fw-bold text-info">${{ number_format($totalApplied, 0) }}</div>
+                                    <div class="text-muted small">{{ $deductionBills->count() }} {{ Str::plural('bill', $deductionBills->count()) }} settled from balances</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -406,33 +418,42 @@
                             <thead>
                                 <tr>
                                     <th scope="col">#</th>
-                                    <th scope="col">Date Received</th>
-                                    <th scope="col">Amount</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">For Bill</th>
+                                    <th scope="col">From Advance</th>
+                                    <th scope="col">From Deposit</th>
                                     <th scope="col">Method</th>
                                     <th scope="col">Reference</th>
-                                    <th scope="col">Applied To</th>
-                                    <th scope="col">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <th scope="row">1</th>
-                                    <td>03 Jun 2026</td>
-                                    <td>$1,300</td>
-                                    <td>M-Pesa</td>
-                                    <td>QFG7H2K9LP</td>
-                                    <td>Aug &ndash; Sep 2026</td>
-                                    <td><span class="badge bg-info">Unapplied</span></td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">2</th>
-                                    <td>01 Jan 2026</td>
-                                    <td>${{ number_format($house->security_deposit, 0) }}</td>
-                                    <td>Bank Transfer</td>
-                                    <td>TRX-410092</td>
-                                    <td>Security Deposit</td>
-                                    <td><span class="badge bg-secondary">Held</span></td>
-                                </tr>
+                                @forelse ($deductionBills as $bill)
+                                    <tr>
+                                        <th scope="row">{{ $loop->iteration }}</th>
+                                        <td>{{ optional($bill->paid_at)->format('d M Y') ?: '—' }}</td>
+                                        <td>{{ $bill->period->format('F Y') }}</td>
+                                        <td>
+                                            @if ((float) $bill->advance_used > 0)
+                                                <span class="fw-semibold text-primary">−${{ number_format($bill->advance_used, 0) }}</span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ((float) $bill->deposit_used > 0)
+                                                <span class="fw-semibold text-info">−${{ number_format($bill->deposit_used, 0) }}</span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $bill->method ?: '—' }}</td>
+                                        <td>{{ $bill->reference ?: '—' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">No advance/deposit deductions yet.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -443,7 +464,9 @@
     </section>
 
     <!-- Record Payment Modal -->
-    <div class="modal fade" id="recordPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="recordPaymentModal" tabindex="-1" aria-hidden="true"
+        data-advance-available="{{ (float) $house->advance_amount }}"
+        data-deposit-available="{{ (float) $house->security_deposit }}">
         <div class="modal-dialog">
             <div class="modal-content">
                 <form id="recordPaymentForm" method="POST">
@@ -454,36 +477,48 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="text-muted small mb-3">
-                            Period: <strong id="payModalPeriod"></strong> &mdash;
-                            Bill total: <strong id="payModalTotal"></strong>
+                        <p class="text-muted small mb-1">
+                            Period: <strong id="payModalPeriod"></strong>
                         </p>
+                        <div class="d-flex justify-content-between align-items-center border rounded px-3 py-2 mb-3 bg-light">
+                            <span class="fw-semibold">Bill Total</span>
+                            <span class="fs-5 fw-bold" id="payModalTotal"></span>
+                        </div>
 
-                        @if ($errors->any() && old('_from_payment'))
-                            <div class="alert alert-danger">
-                                <ul class="mb-0">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
+                        {{-- Section 1: Pay from Advance Balance --}}
+                        <div class="border rounded p-3 mb-3">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi bi-wallet2 text-primary"></i>
+                                <span class="fw-semibold">Pay from Advance Balance</span>
+                                <span class="ms-auto small text-muted">Available: <strong id="payAdvanceAvail" class="text-primary"></strong></span>
                             </div>
-                        @endif
-
-                        <input type="hidden" name="_from_payment" value="1">
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Amount Paid <span class="text-danger">*</span></label>
+                            <p class="text-muted small mb-2">Deducts from the renter's advance credit.</p>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" name="paid_amount" id="payModalAmount"
-                                    class="form-control" min="0" step="0.01" required
-                                    placeholder="Enter amount received">
+                                <input type="number" name="advance_used" id="payAdvanceInput"
+                                    class="form-control" min="0" step="0.01" value="0" placeholder="0">
+                                <button type="button" class="btn btn-outline-primary" id="payAdvanceMax">Use Max</button>
                             </div>
-                            <div class="form-text" id="payModalOverpaymentHint"></div>
+                        </div>
+
+                        {{-- Section 2: Pay from Security Deposit --}}
+                        <div class="border rounded p-3 mb-3">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi bi-safe text-info"></i>
+                                <span class="fw-semibold">Pay from Security Deposit</span>
+                                <span class="ms-auto small text-muted">Available: <strong id="payDepositAvail" class="text-info"></strong></span>
+                            </div>
+                            <p class="text-muted small mb-2">Deducts from the refundable deposit held.</p>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="deposit_used" id="payDepositInput"
+                                    class="form-control" min="0" step="0.01" value="0" placeholder="0">
+                                <button type="button" class="btn btn-outline-info" id="payDepositMax">Use Max</button>
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Payment Method</label>
+                            <label class="form-label fw-semibold">Payment Method <span class="text-muted small fw-normal">(for remaining cash)</span></label>
                             <select name="method" class="form-select">
                                 <option value="">— Select —</option>
                                 <option value="Cash">Cash</option>
@@ -499,10 +534,17 @@
                             <input type="text" name="reference" class="form-control"
                                 placeholder="Optional — e.g. M-Pesa confirmation code">
                         </div>
+
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">Remaining to Pay (Cash / Other)</span>
+                            <span class="fs-4 fw-bold text-primary" id="payModalCollectTotal"></span>
+                        </div>
+                        <div class="form-text" id="payModalHint"></div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="paySubmitBtn">
                             <i class="bi bi-cash-coin me-1"></i> Confirm Payment
                         </button>
                     </div>
@@ -593,51 +635,83 @@
                 recalcBill();
             }
 
-            // Record Payment modal — use Bootstrap's show.bs.modal so it works even
-            // after simple-datatables re-renders the table rows on pagination.
-            const payModal = document.getElementById('recordPaymentModal');
-            const amtInput = document.getElementById('payModalAmount');
+            // Record Payment modal — populate via Bootstrap's show.bs.modal so it works
+            // even after simple-datatables re-renders rows on pagination.
+            const payModal        = document.getElementById('recordPaymentModal');
+            const payAdvanceInput = document.getElementById('payAdvanceInput');
+            const payDepositInput = document.getElementById('payDepositInput');
+            const paySubmitBtn    = document.getElementById('paySubmitBtn');
+            let   payBillTotal    = 0;
+            let   payAdvanceAvail = 0;
+            let   payDepositAvail = 0;
+
+            const money = n => '$' + n.toLocaleString(undefined, { maximumFractionDigits: 0 });
 
             if (payModal) {
+                payAdvanceAvail = parseFloat(payModal.dataset.advanceAvailable) || 0;
+                payDepositAvail = parseFloat(payModal.dataset.depositAvailable) || 0;
+
                 payModal.addEventListener('show.bs.modal', function (e) {
                     const btn    = e.relatedTarget;
-                    const action = btn.dataset.action;
-                    const total  = parseFloat(btn.dataset.total);
-                    const period = btn.dataset.period;
+                    payBillTotal = parseFloat(btn.dataset.total) || 0;
 
-                    document.getElementById('recordPaymentForm').action = action;
-                    document.getElementById('payModalPeriod').textContent  = period;
-                    document.getElementById('payModalTotal').textContent   = '$' + total.toLocaleString(undefined, { maximumFractionDigits: 0 });
+                    document.getElementById('recordPaymentForm').action  = btn.dataset.action;
+                    document.getElementById('payModalPeriod').textContent = btn.dataset.period;
+                    document.getElementById('payModalTotal').textContent  = money(payBillTotal);
+                    document.getElementById('payAdvanceAvail').textContent = money(payAdvanceAvail);
+                    document.getElementById('payDepositAvail').textContent = money(payDepositAvail);
 
-                    amtInput.value = total.toFixed(2);
-                    amtInput.min   = total.toFixed(2);
+                    payAdvanceInput.value = '0';
+                    payDepositInput.value = '0';
+                    payModal.querySelectorAll('select, input[name="reference"]').forEach(el => el.value = '');
 
-                    updateOverpaymentHint(total, total);
+                    recalcPayTotal();
                 });
             }
 
-            if (amtInput) {
-                amtInput.addEventListener('input', function () {
-                    const billTotal = parseFloat(this.min) || 0;
-                    updateOverpaymentHint(billTotal, parseFloat(this.value) || 0);
-                });
-            }
+            function recalcPayTotal() {
+                const advance = parseFloat(payAdvanceInput.value) || 0;
+                const deposit = parseFloat(payDepositInput.value) || 0;
+                const remaining = Math.round((payBillTotal - advance - deposit) * 100) / 100;
 
-            function updateOverpaymentHint(billTotal, paid) {
-                const hint = document.getElementById('payModalOverpaymentHint');
-                if (!hint) return;
-                const diff = Math.round((paid - billTotal) * 100) / 100;
-                if (diff > 0) {
-                    hint.className   = 'form-text text-info fw-semibold';
-                    hint.textContent = '+$' + diff.toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' overpayment → added to security deposit.';
-                } else if (diff < 0) {
-                    hint.className   = 'form-text text-danger';
-                    hint.textContent = 'Amount must be at least $' + billTotal.toLocaleString(undefined, { maximumFractionDigits: 0 }) + '.';
+                document.getElementById('payModalCollectTotal').textContent = money(Math.max(0, remaining));
+
+                const hint = document.getElementById('payModalHint');
+                let error = '';
+                if (advance > payAdvanceAvail)      error = 'Advance exceeds available balance of ' + money(payAdvanceAvail) + '.';
+                else if (deposit > payDepositAvail) error = 'Deposit exceeds available balance of ' + money(payDepositAvail) + '.';
+                else if (advance + deposit > payBillTotal) error = 'Advance + deposit cannot exceed the bill total.';
+
+                if (error) {
+                    hint.className = 'form-text text-danger';
+                    hint.textContent = error;
+                    paySubmitBtn.disabled = true;
                 } else {
-                    hint.className   = 'form-text text-muted';
-                    hint.textContent = 'Exact payment — no overpayment.';
+                    hint.className = 'form-text text-muted';
+                    hint.textContent = remaining > 0
+                        ? money(remaining) + ' to be collected as cash / other.'
+                        : 'Fully covered by advance / deposit — no cash needed.';
+                    paySubmitBtn.disabled = false;
                 }
             }
+
+            if (payAdvanceInput) payAdvanceInput.addEventListener('input', recalcPayTotal);
+            if (payDepositInput) payDepositInput.addEventListener('input', recalcPayTotal);
+
+            const payAdvanceMax = document.getElementById('payAdvanceMax');
+            const payDepositMax = document.getElementById('payDepositMax');
+
+            if (payAdvanceMax) payAdvanceMax.addEventListener('click', function () {
+                const deposit = parseFloat(payDepositInput.value) || 0;
+                payAdvanceInput.value = Math.max(0, Math.min(payAdvanceAvail, payBillTotal - deposit)).toFixed(2);
+                recalcPayTotal();
+            });
+
+            if (payDepositMax) payDepositMax.addEventListener('click', function () {
+                const advance = parseFloat(payAdvanceInput.value) || 0;
+                payDepositInput.value = Math.max(0, Math.min(payDepositAvail, payBillTotal - advance)).toFixed(2);
+                recalcPayTotal();
+            });
 
             // Monthly Bills table — Action column is not sortable/searchable
             if (document.getElementById('billsTable')) {
