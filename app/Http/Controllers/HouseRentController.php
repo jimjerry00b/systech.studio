@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\House;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class HouseRentController extends Controller
 {
@@ -81,9 +83,24 @@ class HouseRentController extends Controller
      */
     public function show(House $house)
     {
-        $house->load('bills');
+        $house->load('bills', 'advanceTransactions');
 
         return view('houses.show', compact('house'));
+    }
+
+    /**
+     * Download a full account statement (PDF) for the renter.
+     */
+    public function statement(House $house)
+    {
+        $house->load('bills', 'advanceTransactions');
+
+        $pdf = Pdf::loadView('houses.statement', compact('house'))
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'statement-' . Str::slug($house->name) . '-' . now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     /**

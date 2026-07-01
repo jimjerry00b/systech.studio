@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdvanceTransactionController;
 use App\Http\Controllers\BillController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HomeController;
@@ -35,8 +36,14 @@ Route::middleware('admin')->group(function(){
     Route::get('/logout', [AdminController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('houses/inactive', [HouseRentController::class, 'inactive'])->name('houses.inactive');
+    Route::get('houses/{house}/statement', [HouseRentController::class, 'statement'])->name('houses.statement');
     Route::resource('houses', HouseRentController::class);
     Route::resource('houses.bills', BillController::class)
         ->shallow()
         ->only(['store', 'update', 'destroy']);
+    Route::get('bills/{bill}/receipt', [BillController::class, 'receipt'])->name('bills.receipt');
+
+    Route::post('houses/{house}/advances', [AdvanceTransactionController::class, 'store'])->name('advances.store');
+    Route::delete('advances/{advance}', [AdvanceTransactionController::class, 'destroy'])->name('advances.destroy');
+    Route::get('advances/{advance}/receipt', [AdvanceTransactionController::class, 'receipt'])->name('advances.receipt');
 });

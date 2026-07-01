@@ -4,10 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\Bill;
 use App\Models\House;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class BillController extends Controller
 {
+    /**
+     * Download a payment receipt (PDF) for a single paid bill.
+     */
+    public function receipt(Bill $bill)
+    {
+        $bill->load('house');
+
+        $pdf = Pdf::loadView('bills.receipt', compact('bill'))
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'receipt-' . Str::slug($bill->house->name) . '-' . $bill->period->format('Y-m') . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
     /**
      * Generate (store) a new monthly bill for a house.
      * Rent and water are fixed (pulled from the house); electricity varies.
@@ -53,6 +70,7 @@ class BillController extends Controller
         $validated = $request->validate([
             'advance_used' => ['nullable', 'numeric', 'min:0', 'max:' . (float) $house->advance_amount],
             'deposit_used' => ['nullable', 'numeric', 'min:0', 'max:' . (float) $house->security_deposit],
+            'paid_date'    => ['nullable', 'date', 'before_or_equal:today'],
             'method'       => ['nullable', 'string', 'max:255'],
             'reference'    => ['nullable', 'string', 'max:255'],
         ], [
@@ -62,6 +80,9 @@ class BillController extends Controller
 
         $advanceUsed = round((float) ($validated['advance_used'] ?? 0), 2);
         $depositUsed = round((float) ($validated['deposit_used'] ?? 0), 2);
+        $paidAt      = ! empty($validated['paid_date'])
+            ? \Illuminate\Support\Carbon::parse($validated['paid_date'])
+            : now();
 
         if ($advanceUsed + $depositUsed > $billTotal) {
             return back()->withErrors([
@@ -77,7 +98,7 @@ class BillController extends Controller
             'deposit_used' => $depositUsed,
             'method'       => $validated['method'] ?? null,
             'reference'    => $validated['reference'] ?? null,
-            'paid_at'      => now(),
+            'paid_at'      => $paidAt,
         ]);
 
         if ($advanceUsed > 0) {

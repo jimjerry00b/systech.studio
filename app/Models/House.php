@@ -43,6 +43,11 @@ class House extends Model
         return $this->hasMany(Bill::class)->orderByDesc('period');
     }
 
+    public function advanceTransactions(): HasMany
+    {
+        return $this->hasMany(AdvanceTransaction::class)->orderByDesc('received_at')->orderByDesc('id');
+    }
+
     /** Total amount billed across all bills. */
     public function totalBilled(): float
     {

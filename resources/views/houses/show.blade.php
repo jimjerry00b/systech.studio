@@ -53,6 +53,10 @@
         );
         $totalApplied = $deductionBills->sum(fn($b) => (float) $b->advance_used + (float) $b->deposit_used);
 
+        // Funds received (top-ups) into advance balance / security deposit.
+        $advanceTransactions = $house->advanceTransactions;
+        $totalReceived = $advanceTransactions->sum('amount');
+
         // WhatsApp summary covering every generated bill for this renter.
         $waSummaryPhone = $house->whatsappPhone();
         $waSummaryLines = [];
@@ -84,6 +88,9 @@
                             <div>
                                 <a href="{{ route('houses.index') }}" class="btn btn-outline-secondary btn-sm">
                                     <i class="bi bi-arrow-left me-1"></i> Back
+                                </a>
+                                <a href="{{ route('houses.statement', $house) }}" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
                                 </a>
                                 <a href="{{ route('houses.edit', $house) }}" class="btn btn-primary btn-sm">
                                     <i class="bi bi-pencil me-1"></i> Edit
@@ -316,7 +323,12 @@
             <div class="col-12">
                 <div class="card recent-sales overflow-auto">
                     <div class="card-body">
-                        <h5 class="card-title">Payment History <span>| Paid Bills</span></h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title">Payment History <span>| Paid Bills</span></h5>
+                            <a href="{{ route('houses.statement', $house) }}" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+                            </a>
+                        </div>
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
@@ -354,6 +366,7 @@
                                     <th scope="col">From Deposit</th>
                                     <th scope="col">Method</th>
                                     <th scope="col">Status</th>
+                                    <th scope="col" class="text-end">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -373,10 +386,16 @@
                                         <td>{!! $depUsed > 0 ? '<span class="text-info fw-semibold">−$' . number_format($depUsed, 0) . '</span>' : '<span class="text-muted">—</span>' !!}</td>
                                         <td>{{ $bill->method ?: '—' }}</td>
                                         <td><span class="badge bg-success">Paid</span></td>
+                                        <td class="text-end">
+                                            <a href="{{ route('bills.receipt', $bill) }}"
+                                                class="btn btn-sm btn-outline-danger" title="Download receipt PDF">
+                                                <i class="bi bi-file-earmark-pdf"></i>
+                                            </a>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="9" class="text-center text-muted py-4">No payments yet.</td>
+                                        <td colspan="10" class="text-center text-muted py-4">No payments yet.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -388,33 +407,96 @@
             <div class="col-12">
                 <div class="card recent-sales overflow-auto">
                     <div class="card-body">
-                        <h5 class="card-title">Advance Payments</h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title">Advance &amp; Deposit</h5>
+                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addFundsModal">
+                                <i class="bi bi-plus-circle me-1"></i> Add Funds
+                            </button>
+                        </div>
 
                         <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Advance Balance</div>
                                     <div class="fs-4 fw-bold text-success">${{ number_format($house->advance_amount, 0) }}</div>
                                     <div class="text-muted small">Credit available</div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="border rounded p-3 h-100">
-                                    <div class="text-muted small text-uppercase">Balance Applied</div>
-                                    <div class="fs-4 fw-bold text-info">${{ number_format($totalApplied, 0) }}</div>
-                                    <div class="text-muted small">{{ $deductionBills->count() }} {{ Str::plural('bill', $deductionBills->count()) }} settled from balances</div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Security Deposit</div>
                                     <div class="fs-4 fw-bold">${{ number_format($house->security_deposit, 0) }}</div>
                                     <div class="text-muted small">Refundable</div>
                                 </div>
                             </div>
+                            <div class="col-md-3">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="text-muted small text-uppercase">Total Received</div>
+                                    <div class="fs-4 fw-bold text-success">${{ number_format($totalReceived, 0) }}</div>
+                                    <div class="text-muted small">{{ $advanceTransactions->count() }} {{ Str::plural('top-up', $advanceTransactions->count()) }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="text-muted small text-uppercase">Applied to Bills</div>
+                                    <div class="fs-4 fw-bold text-info">${{ number_format($totalApplied, 0) }}</div>
+                                    <div class="text-muted small">{{ $deductionBills->count() }} {{ Str::plural('bill', $deductionBills->count()) }} settled</div>
+                                </div>
+                            </div>
                         </div>
 
-                        <table class="table table-borderless datatable">
+                        <h6 class="text-muted text-uppercase small mb-2">Funds Received</h6>
+                        <table class="table table-borderless mb-4">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Date Received</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Amount</th>
+                                    <th scope="col">Method</th>
+                                    <th scope="col">Reference</th>
+                                    <th scope="col">Note</th>
+                                    <th scope="col" class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($advanceTransactions as $tx)
+                                    <tr>
+                                        <th scope="row">{{ $loop->iteration }}</th>
+                                        <td>{{ optional($tx->received_at)->format('d M Y') ?: '—' }}</td>
+                                        <td>
+                                            @if ($tx->type === 'deposit')
+                                                <span class="badge bg-info">Security Deposit</span>
+                                            @else
+                                                <span class="badge bg-primary">Advance</span>
+                                            @endif
+                                        </td>
+                                        <td class="fw-semibold text-success">+${{ number_format($tx->amount, 0) }}</td>
+                                        <td>{{ $tx->method ?: '—' }}</td>
+                                        <td>{{ $tx->reference ?: '—' }}</td>
+                                        <td>{{ $tx->note ?: '—' }}</td>
+                                        <td class="text-end">
+                                            <a href="{{ route('advances.receipt', $tx) }}" class="btn btn-sm btn-outline-danger" title="Download receipt PDF">
+                                                <i class="bi bi-file-earmark-pdf"></i>
+                                            </a>
+                                            <form action="{{ route('advances.destroy', $tx) }}" method="POST" class="d-inline"
+                                                onsubmit="return confirm('Remove this entry and reverse it from the balance?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">No advance or deposit payments received yet.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+
+                        <h6 class="text-muted text-uppercase small mb-2">Applied to Bills</h6>
+                        <table class="table table-borderless">
                             <thead>
                                 <tr>
                                     <th scope="col">#</th>
@@ -466,7 +548,8 @@
     <!-- Record Payment Modal -->
     <div class="modal fade" id="recordPaymentModal" tabindex="-1" aria-hidden="true"
         data-advance-available="{{ (float) $house->advance_amount }}"
-        data-deposit-available="{{ (float) $house->security_deposit }}">
+        data-deposit-available="{{ (float) $house->security_deposit }}"
+        data-today="{{ now()->format('Y-m-d') }}">
         <div class="modal-dialog">
             <div class="modal-content">
                 <form id="recordPaymentForm" method="POST">
@@ -483,6 +566,14 @@
                         <div class="d-flex justify-content-between align-items-center border rounded px-3 py-2 mb-3 bg-light">
                             <span class="fw-semibold">Bill Total</span>
                             <span class="fs-5 fw-bold" id="payModalTotal"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Payment Date</label>
+                            <input type="date" name="paid_date" id="payDateInput"
+                                class="form-control" value="{{ now()->format('Y-m-d') }}"
+                                max="{{ now()->format('Y-m-d') }}">
+                            <div class="form-text">Defaults to today; set a past date to backdate the payment.</div>
                         </div>
 
                         {{-- Section 1: Pay from Advance Balance --}}
@@ -546,6 +637,77 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary" id="paySubmitBtn">
                             <i class="bi bi-cash-coin me-1"></i> Confirm Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Funds Modal -->
+    <div class="modal fade" id="addFundsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('advances.store', $house) }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Advance / Deposit Funds</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">Record money received from the renter as advance credit or security deposit. The chosen balance is increased immediately.</p>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Add To <span class="text-danger">*</span></label>
+                            <select name="type" class="form-select" required>
+                                <option value="advance">Advance Balance</option>
+                                <option value="deposit">Security Deposit</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Amount <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="amount" class="form-control" min="0.01" step="0.01"
+                                    value="{{ old('amount') }}" placeholder="Enter amount received" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Date Received</label>
+                            <input type="date" name="received_at" class="form-control"
+                                value="{{ old('received_at', now()->format('Y-m-d')) }}" max="{{ now()->format('Y-m-d') }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Payment Method</label>
+                            <select name="method" class="form-select">
+                                <option value="">— Select —</option>
+                                <option value="Cash">Cash</option>
+                                <option value="M-Pesa">M-Pesa</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Reference / Transaction ID</label>
+                            <input type="text" name="reference" class="form-control" value="{{ old('reference') }}"
+                                placeholder="Optional — e.g. M-Pesa confirmation code">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Note</label>
+                            <input type="text" name="note" class="form-control" value="{{ old('note') }}"
+                                placeholder="Optional — e.g. 2 months advance">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-plus-circle me-1"></i> Add Funds
                         </button>
                     </div>
                 </form>
@@ -665,6 +827,9 @@
                     payDepositInput.value = '0';
                     payModal.querySelectorAll('select, input[name="reference"]').forEach(el => el.value = '');
 
+                    const payDateInput = document.getElementById('payDateInput');
+                    if (payDateInput) payDateInput.value = payModal.dataset.today;
+
                     recalcPayTotal();
                 });
             }
@@ -722,11 +887,12 @@
                 });
             }
 
-            // Payment History table
+            // Payment History table — Action column is not sortable/searchable
             if (document.getElementById('paidBillsTable')) {
                 new simpleDatatables.DataTable('#paidBillsTable', {
                     perPage: 10,
                     perPageSelect: [5, 10, 20, 50],
+                    columns: [{ select: 9, sortable: false, searchable: false }],
                 });
             }
         });
