@@ -34,6 +34,7 @@ Route::middleware('guest')->group(function(){
 Route::middleware('admin')->group(function(){
     Route::get('/logout', [AdminController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('houses/inactive', [HouseRentController::class, 'inactive'])->name('houses.inactive');
     Route::resource('houses', HouseRentController::class);
     Route::resource('houses.bills', BillController::class)
         ->shallow()

@@ -300,8 +300,14 @@
                     data-bs-parent="#sidebar-nav">
                     <li>
                         <a href="{{ route('houses.index') }}"
-                            class="{{ Request::segment(1) == 'houses' ? 'active' : '' }}">
-                            <i class="bi bi-circle"></i><span>View</span>
+                            class="{{ Request::is('houses') || Request::is('houses/create') ? 'active' : '' }}">
+                            <i class="bi bi-circle"></i><span>Active Renters</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('houses.inactive') }}"
+                            class="{{ Request::is('houses/inactive') ? 'active' : '' }}">
+                            <i class="bi bi-circle"></i><span>Old Renters</span>
                         </a>
                     </li>
                 </ul>

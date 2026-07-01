@@ -1,3 +1,4 @@
+@use('Illuminate\Support\Facades\Storage')
 @extends('components.layouts.dashboard')
 @section('title', 'Show Renter')
 @section('content')
@@ -88,6 +89,32 @@
                             <div class="col-lg-9 col-md-8">
                                 @if ($house->email)
                                     <a href="mailto:{{ $house->email }}">{{ $house->email }}</a>
+                                @else
+                                    —
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-lg-3 col-md-4 label fw-bold">Renter Photo</div>
+                            <div class="col-lg-9 col-md-8">
+                                @if ($house->photo)
+                                    <a href="{{ Storage::disk('public')->url($house->photo) }}" target="_blank">
+                                        <img src="{{ Storage::disk('public')->url($house->photo) }}" alt="Renter photo" class="rounded" style="height:100px; object-fit:cover;">
+                                    </a>
+                                @else
+                                    —
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-lg-3 col-md-4 label fw-bold">NID Card Copy</div>
+                            <div class="col-lg-9 col-md-8">
+                                @if ($house->nid_copy)
+                                    <a href="{{ Storage::disk('public')->url($house->nid_copy) }}" target="_blank">
+                                        <img src="{{ Storage::disk('public')->url($house->nid_copy) }}" alt="NID card" class="rounded" style="height:100px; object-fit:cover;">
+                                    </a>
                                 @else
                                     —
                                 @endif

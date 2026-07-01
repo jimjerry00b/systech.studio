@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\House;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class HouseRentController extends Controller
 {
@@ -12,9 +13,16 @@ class HouseRentController extends Controller
      */
     public function index()
     {
-        $houses = House::latest()->get();
+        $houses = House::whereIn('status', ['active', 'pending'])->latest()->get();
 
         return view('houses.index', compact('houses'));
+    }
+
+    public function inactive()
+    {
+        $houses = House::where('status', 'expired')->latest()->get();
+
+        return view('houses.inactive', compact('houses'));
     }
 
     /**
@@ -34,6 +42,8 @@ class HouseRentController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
+            'photo' => ['nullable', 'image', 'max:2048'],
+            'nid_copy' => ['nullable', 'image', 'max:4096'],
             'unit' => ['required', 'string', 'max:255'],
             'rent_amount' => ['required', 'numeric', 'min:0'],
             'water_amount' => ['required', 'numeric', 'min:0'],
@@ -51,6 +61,13 @@ class HouseRentController extends Controller
 
         $validated['security_deposit'] = $validated['security_deposit'] ?? 0;
         $validated['advance_amount'] = $validated['advance_amount'] ?? 0;
+
+        if ($request->hasFile('photo')) {
+            $validated['photo'] = $request->file('photo')->store('renters/photos', 'public');
+        }
+        if ($request->hasFile('nid_copy')) {
+            $validated['nid_copy'] = $request->file('nid_copy')->store('renters/nid', 'public');
+        }
 
         $house = House::create($validated);
 
@@ -86,6 +103,8 @@ class HouseRentController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
+            'photo' => ['nullable', 'image', 'max:2048'],
+            'nid_copy' => ['nullable', 'image', 'max:4096'],
             'unit' => ['required', 'string', 'max:255'],
             'rent_amount' => ['required', 'numeric', 'min:0'],
             'water_amount' => ['required', 'numeric', 'min:0'],
@@ -102,6 +121,15 @@ class HouseRentController extends Controller
         $validated['security_deposit'] = $validated['security_deposit'] ?? 0;
         $validated['advance_amount'] = $validated['advance_amount'] ?? 0;
 
+        if ($request->hasFile('photo')) {
+            if ($house->photo) Storage::disk('public')->delete($house->photo);
+            $validated['photo'] = $request->file('photo')->store('renters/photos', 'public');
+        }
+        if ($request->hasFile('nid_copy')) {
+            if ($house->nid_copy) Storage::disk('public')->delete($house->nid_copy);
+            $validated['nid_copy'] = $request->file('nid_copy')->store('renters/nid', 'public');
+        }
+
         $house->update($validated);
 
         return redirect()
@@ -114,6 +142,9 @@ class HouseRentController extends Controller
      */
     public function destroy(House $house)
     {
+        if ($house->photo) Storage::disk('public')->delete($house->photo);
+        if ($house->nid_copy) Storage::disk('public')->delete($house->nid_copy);
+
         $house->delete();
 
         return redirect()

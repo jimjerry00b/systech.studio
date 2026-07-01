@@ -27,7 +27,7 @@
                             </div>
                         @endif
 
-                        <form action="{{ route('houses.store') }}" method="POST">
+                        <form action="{{ route('houses.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
 
                             <h6 class="text-muted text-uppercase small mb-3">Renter</h6>
@@ -47,6 +47,16 @@
                                     <label class="form-label">Email</label>
                                     <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}">
                                     @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Renter Photo</label>
+                                    <input type="file" name="photo" accept="image/*" class="form-control @error('photo') is-invalid @enderror">
+                                    @error('photo') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">NID Card Copy</label>
+                                    <input type="file" name="nid_copy" accept="image/*" class="form-control @error('nid_copy') is-invalid @enderror">
+                                    @error('nid_copy') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                             </div>
 

@@ -1,3 +1,4 @@
+@use('Illuminate\Support\Facades\Storage')
 @extends('components.layouts.dashboard')
 @section('title', 'Renter Information | Edit')
 @section('content')
@@ -28,7 +29,7 @@
                             </div>
                         @endif
 
-                        <form action="{{ route('houses.update', $house) }}" method="POST">
+                        <form action="{{ route('houses.update', $house) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
 
@@ -49,6 +50,28 @@
                                     <label class="form-label">Email</label>
                                     <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $house->email) }}">
                                     @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Renter Photo</label>
+                                    @if ($house->photo)
+                                        <div class="mb-2">
+                                            <img src="{{ Storage::disk('public')->url($house->photo) }}" alt="Current photo" class="rounded" style="height:80px; object-fit:cover;">
+                                            <span class="text-muted small ms-2">Current photo — upload a new one to replace</span>
+                                        </div>
+                                    @endif
+                                    <input type="file" name="photo" accept="image/*" class="form-control @error('photo') is-invalid @enderror">
+                                    @error('photo') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">NID Card Copy</label>
+                                    @if ($house->nid_copy)
+                                        <div class="mb-2">
+                                            <img src="{{ Storage::disk('public')->url($house->nid_copy) }}" alt="Current NID" class="rounded" style="height:80px; object-fit:cover;">
+                                            <span class="text-muted small ms-2">Current NID — upload a new one to replace</span>
+                                        </div>
+                                    @endif
+                                    <input type="file" name="nid_copy" accept="image/*" class="form-control @error('nid_copy') is-invalid @enderror">
+                                    @error('nid_copy') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                             </div>
 

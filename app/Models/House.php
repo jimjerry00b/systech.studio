@@ -11,6 +11,8 @@ class House extends Model
         'name',
         'phone',
         'email',
+        'photo',
+        'nid_copy',
         'unit',
         'rent_amount',
         'water_amount',
