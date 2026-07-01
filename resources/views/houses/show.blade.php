@@ -265,12 +265,16 @@
                                                 </a>
                                             @endif
                                             @if ($bill->status !== 'paid')
-                                                <form action="{{ route('bills.update', $bill) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="status" value="paid">
-                                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Mark as paid"><i class="bi bi-check-lg"></i></button>
-                                                </form>
+                                                <button type="button"
+                                                    class="btn btn-sm btn-outline-primary js-record-payment"
+                                                    title="Record payment"
+                                                    data-action="{{ route('bills.update', $bill) }}"
+                                                    data-total="{{ (float) $bill->total }}"
+                                                    data-period="{{ $bill->period->format('F Y') }}"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#recordPaymentModal">
+                                                    <i class="bi bi-cash-coin"></i>
+                                                </button>
                                             @endif
                                             <form action="{{ route('bills.destroy', $bill) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this bill?');">
                                                 @csrf
@@ -327,25 +331,35 @@
                                     <th scope="col">#</th>
                                     <th scope="col">Date Paid</th>
                                     <th scope="col">Period</th>
-                                    <th scope="col">Rent</th>
-                                    <th scope="col">Water (WASA)</th>
-                                    <th scope="col">Electricity</th>
-                                    <th scope="col">Total</th>
+                                    <th scope="col">Bill Total</th>
+                                    <th scope="col">Paid Amount</th>
+                                    <th scope="col">Overpayment</th>
                                     <th scope="col">Method</th>
+                                    <th scope="col">Reference</th>
                                     <th scope="col">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($paidBills as $bill)
+                                    @php
+                                        $paidAmt = (float) ($bill->paid_amount ?? $bill->total);
+                                        $over = max(0, $paidAmt - (float) $bill->total);
+                                    @endphp
                                     <tr>
                                         <th scope="row">{{ $loop->iteration }}</th>
                                         <td>{{ optional($bill->paid_at)->format('d M Y') ?: '—' }}</td>
                                         <td>{{ $bill->period->format('F Y') }}</td>
-                                        <td>${{ number_format($bill->rent, 0) }}</td>
-                                        <td>${{ number_format($bill->water, 0) }}</td>
-                                        <td>${{ number_format($bill->electricity, 0) }}</td>
                                         <td class="fw-bold">${{ number_format($bill->total, 0) }}</td>
+                                        <td class="fw-bold text-success">${{ number_format($paidAmt, 0) }}</td>
+                                        <td>
+                                            @if ($over > 0)
+                                                <span class="text-info fw-semibold">+${{ number_format($over, 0) }}</span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $bill->method ?: '—' }}</td>
+                                        <td>{{ $bill->reference ?: '—' }}</td>
                                         <td><span class="badge bg-success">Paid</span></td>
                                     </tr>
                                 @empty
@@ -428,6 +442,75 @@
         </div>
     </section>
 
+    <!-- Record Payment Modal -->
+    <div class="modal fade" id="recordPaymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="recordPaymentForm" method="POST">
+                    @csrf
+                    @method('PATCH')
+                    <div class="modal-header">
+                        <h5 class="modal-title">Record Payment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">
+                            Period: <strong id="payModalPeriod"></strong> &mdash;
+                            Bill total: <strong id="payModalTotal"></strong>
+                        </p>
+
+                        @if ($errors->any() && old('_from_payment'))
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <input type="hidden" name="_from_payment" value="1">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Amount Paid <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="paid_amount" id="payModalAmount"
+                                    class="form-control" min="0" step="0.01" required
+                                    placeholder="Enter amount received">
+                            </div>
+                            <div class="form-text" id="payModalOverpaymentHint"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Payment Method</label>
+                            <select name="method" class="form-select">
+                                <option value="">— Select —</option>
+                                <option value="Cash">Cash</option>
+                                <option value="M-Pesa">M-Pesa</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Reference / Transaction ID</label>
+                            <input type="text" name="reference" class="form-control"
+                                placeholder="Optional — e.g. M-Pesa confirmation code">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-cash-coin me-1"></i> Confirm Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Generate Bill Modal -->
     <div class="modal fade" id="generateBillModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -508,6 +591,52 @@
             if (electric) {
                 electric.addEventListener('input', recalcBill);
                 recalcBill();
+            }
+
+            // Record Payment modal — use Bootstrap's show.bs.modal so it works even
+            // after simple-datatables re-renders the table rows on pagination.
+            const payModal = document.getElementById('recordPaymentModal');
+            const amtInput = document.getElementById('payModalAmount');
+
+            if (payModal) {
+                payModal.addEventListener('show.bs.modal', function (e) {
+                    const btn    = e.relatedTarget;
+                    const action = btn.dataset.action;
+                    const total  = parseFloat(btn.dataset.total);
+                    const period = btn.dataset.period;
+
+                    document.getElementById('recordPaymentForm').action = action;
+                    document.getElementById('payModalPeriod').textContent  = period;
+                    document.getElementById('payModalTotal').textContent   = '$' + total.toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+                    amtInput.value = total.toFixed(2);
+                    amtInput.min   = total.toFixed(2);
+
+                    updateOverpaymentHint(total, total);
+                });
+            }
+
+            if (amtInput) {
+                amtInput.addEventListener('input', function () {
+                    const billTotal = parseFloat(this.min) || 0;
+                    updateOverpaymentHint(billTotal, parseFloat(this.value) || 0);
+                });
+            }
+
+            function updateOverpaymentHint(billTotal, paid) {
+                const hint = document.getElementById('payModalOverpaymentHint');
+                if (!hint) return;
+                const diff = Math.round((paid - billTotal) * 100) / 100;
+                if (diff > 0) {
+                    hint.className   = 'form-text text-info fw-semibold';
+                    hint.textContent = '+$' + diff.toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' overpayment → added to security deposit.';
+                } else if (diff < 0) {
+                    hint.className   = 'form-text text-danger';
+                    hint.textContent = 'Amount must be at least $' + billTotal.toLocaleString(undefined, { maximumFractionDigits: 0 }) + '.';
+                } else {
+                    hint.className   = 'form-text text-muted';
+                    hint.textContent = 'Exact payment — no overpayment.';
+                }
             }
 
             // Monthly Bills table — Action column is not sortable/searchable

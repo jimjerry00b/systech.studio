@@ -40,26 +40,41 @@ class BillController extends Controller
     }
 
     /**
-     * Mark a bill as paid (or update its payment details).
+     * Record a payment for a bill.
+     * Paid amount must be >= bill total; any excess is added to the house's security deposit.
      */
     public function update(Request $request, Bill $bill)
     {
+        $billTotal = (float) $bill->total;
+
         $validated = $request->validate([
-            'status' => ['required', 'in:paid,unpaid'],
-            'method' => ['nullable', 'string', 'max:255'],
-            'reference' => ['nullable', 'string', 'max:255'],
+            'paid_amount' => ['required', 'numeric', 'min:' . $billTotal],
+            'method'      => ['nullable', 'string', 'max:255'],
+            'reference'   => ['nullable', 'string', 'max:255'],
+        ], [
+            'paid_amount.min' => 'Payment must cover the full bill amount of $' . number_format($billTotal, 0) . '.',
         ]);
 
+        $overpayment = round((float) $validated['paid_amount'] - $billTotal, 2);
+
         $bill->update([
-            'status' => $validated['status'],
-            'method' => $validated['method'] ?? $bill->method,
-            'reference' => $validated['reference'] ?? $bill->reference,
-            'paid_at' => $validated['status'] === 'paid' ? now() : null,
+            'status'      => 'paid',
+            'paid_amount' => $validated['paid_amount'],
+            'method'      => $validated['method'] ?? $bill->method,
+            'reference'   => $validated['reference'] ?? $bill->reference,
+            'paid_at'     => now(),
         ]);
+
+        $flash = 'Payment of $' . number_format($validated['paid_amount'], 0) . ' recorded.';
+
+        if ($overpayment > 0) {
+            $bill->house->increment('security_deposit', $overpayment);
+            $flash .= ' Overpayment of $' . number_format($overpayment, 0) . ' added to security deposit.';
+        }
 
         return redirect()
             ->route('houses.show', $bill->house_id)
-            ->with('message', 'Bill updated.');
+            ->with('message', $flash);
     }
 
     /**

@@ -15,6 +15,7 @@ class Bill extends Model
         'water',
         'electricity',
         'total',
+        'paid_amount',
         'due_date',
         'status',
         'method',
@@ -32,6 +33,7 @@ class Bill extends Model
             'water' => 'decimal:2',
             'electricity' => 'decimal:2',
             'total' => 'decimal:2',
+            'paid_amount' => 'decimal:2',
         ];
     }
 
