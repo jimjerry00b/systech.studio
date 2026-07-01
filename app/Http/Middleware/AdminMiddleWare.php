@@ -25,5 +25,6 @@ class AdminMiddleWare
             Auth::logout();
        }
        return redirect()->route('login')->with('error', 'You do not have permission to access this page.');
+       
     }
 }
