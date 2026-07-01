@@ -213,7 +213,7 @@
                             </div>
                         </div>
 
-                        <table class="table table-borderless datatable">
+                        <table id="billsTable" class="table table-borderless">
                             <thead>
                                 <tr>
                                     <th scope="col">#</th>
@@ -321,7 +321,7 @@
                             </div>
                         </div>
 
-                        <table class="table table-borderless datatable">
+                        <table id="paidBillsTable" class="table table-borderless">
                             <thead>
                                 <tr>
                                     <th scope="col">#</th>
@@ -492,6 +492,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Bill total recalculation
             const rent = document.getElementById('billRent');
             const water = document.getElementById('billWater');
             const electric = document.getElementById('billElectric');
@@ -507,6 +508,23 @@
             if (electric) {
                 electric.addEventListener('input', recalcBill);
                 recalcBill();
+            }
+
+            // Monthly Bills table — Action column is not sortable/searchable
+            if (document.getElementById('billsTable')) {
+                new simpleDatatables.DataTable('#billsTable', {
+                    perPage: 10,
+                    perPageSelect: [5, 10, 20, 50],
+                    columns: [{ select: 7, sortable: false, searchable: false }],
+                });
+            }
+
+            // Payment History table
+            if (document.getElementById('paidBillsTable')) {
+                new simpleDatatables.DataTable('#paidBillsTable', {
+                    perPage: 10,
+                    perPageSelect: [5, 10, 20, 50],
+                });
             }
         });
     </script>
