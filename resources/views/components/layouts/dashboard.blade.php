@@ -289,6 +289,14 @@
             </li>
 
             <li class="nav-item">
+                <a class="nav-link {{ Request::segment(1) != 'contact-messages' ? 'collapsed' : '' }}"
+                href="{{ route('contact-messages.index') }}">
+                    <i class="bi bi-envelope"></i>
+                    <span>Contact Messages</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
                 <a class="nav-link {{ Request::segment(1) != 'houses' ? 'collapsed' : '' }}"
                     data-bs-target="#house-nav" data-bs-toggle="collapse" href="#">
                     <i class="bi bi-grid"></i>

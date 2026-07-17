@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdvanceTransactionController;
 use App\Http\Controllers\BillController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HouseRentController;
 use App\Http\Controllers\ProjectController;
@@ -25,7 +26,7 @@ Route::middleware('guest')->group(function(){
     Route::get('/projects/{project:slug}', [ProjectController::class, 'show'])->name('projects.show');
 
     Route::get('/contact', [ContactController::class, 'index'])->name('contact');
-    Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:contact-form')->name('contact.store');
+    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
     Route::get('/login', [AdminController::class, 'login'])->name('login');
     Route::post('/login', [AdminController::class, 'loginPost'])->name('login.post');
@@ -42,6 +43,10 @@ Route::middleware('admin')->group(function(){
         ->shallow()
         ->only(['store', 'update', 'destroy']);
     Route::get('bills/{bill}/receipt', [BillController::class, 'receipt'])->name('bills.receipt');
+
+    Route::get('contact-messages', [ContactMessageController::class, 'index'])->name('contact-messages.index');
+    Route::patch('contact-messages/{contactMessage}/read', [ContactMessageController::class, 'markRead'])->name('contact-messages.read');
+    Route::delete('contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
 
     Route::post('houses/{house}/advances', [AdvanceTransactionController::class, 'store'])->name('advances.store');
     Route::delete('advances/{advance}', [AdvanceTransactionController::class, 'destroy'])->name('advances.destroy');

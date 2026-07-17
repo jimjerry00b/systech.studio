@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreContactMessageRequest;
-use App\Models\ContactMessage;
+use App\Services\ContactMessageService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
 class ContactController extends Controller
 {
+    public function __construct(private ContactMessageService $contactMessages)
+    {
+    }
+
     public function index(): View
     {
         return view('pages.contact');
@@ -16,11 +20,11 @@ class ContactController extends Controller
 
     public function store(StoreContactMessageRequest $request): RedirectResponse
     {
-        ContactMessage::create([
-            ...$request->validated(),
-            'ip_address' => $request->ip(),
-            'user_agent' => substr((string) $request->userAgent(), 0, 255),
-        ]);
+        $this->contactMessages->submit(
+            $request->validated(),
+            $request->ip(),
+            $request->userAgent(),
+        );
 
         return redirect()
             ->route('contact')

@@ -2,9 +2,10 @@
 
 namespace App\Providers;
 
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\RateLimiter;
+use App\Models\ContactMessage;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -16,16 +17,15 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        RateLimiter::for('contact-form', function (Request $request) {
-            return Limit::perHour(3)
-                ->by($request->ip())
-                ->response(function () {
-                    return back()
-                        ->withInput()
-                        ->withErrors([
-                            'message' => 'You\'ve reached the limit of 3 messages per hour. Please try again later.',
-                        ]);
-                });
+        Event::listen(function (MessageSent $event) {
+            $contactMessage = $event->data['contactMessage'] ?? null;
+
+            if ($contactMessage instanceof ContactMessage) {
+                Log::channel('contact')->info('Notification email sent', [
+                    'contact_message_id' => $contactMessage->id,
+                    'to' => config('mail.contact.to'),
+                ]);
+            }
         });
     }
 }

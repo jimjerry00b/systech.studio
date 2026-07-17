@@ -62,17 +62,17 @@
         $waSummaryLines = [];
         foreach ($bills as $b) {
             $waSummaryLines[] = '- ' . $b->period->format('M Y')
-                . ': Rent $' . number_format($b->rent, 0)
-                . ' + Water $' . number_format($b->water, 0)
-                . ' + Electricity $' . number_format($b->electricity, 0)
-                . ' = $' . number_format($b->total, 0)
+                . ': Rent ৳' . number_format($b->rent, 0)
+                . ' + Water ৳' . number_format($b->water, 0)
+                . ' + Electricity ৳' . number_format($b->electricity, 0)
+                . ' = ৳' . number_format($b->total, 0)
                 . ' (' . ($b->status === 'paid' ? 'Paid' : 'Unpaid') . ')';
         }
         $waSummaryText = 'Hi ' . $house->name . ', here is your billing summary for ' . $house->unit . ":\n\n"
             . implode("\n", $waSummaryLines)
-            . "\n\nTotal billed: $" . number_format($totalBilled, 0)
-            . "\nTotal paid: $" . number_format($totalPaid, 0)
-            . "\nOutstanding: $" . number_format($outstanding, 0)
+            . "\n\nTotal billed: ৳" . number_format($totalBilled, 0)
+            . "\nTotal paid: ৳" . number_format($totalPaid, 0)
+            . "\nOutstanding: ৳" . number_format($outstanding, 0)
             . ($outstanding > 0
                 ? "\n\nKindly clear the outstanding amount. Thank you."
                 : "\n\nAll bills are cleared — thank you!");
@@ -152,7 +152,7 @@
 
                         <div class="row mb-3">
                             <div class="col-lg-3 col-md-4 label fw-bold">Monthly Rent</div>
-                            <div class="col-lg-9 col-md-8">${{ number_format($house->rent_amount, 0) }} / month</div>
+                            <div class="col-lg-9 col-md-8">৳{{ number_format($house->rent_amount, 0) }} / month</div>
                         </div>
 
                         <div class="row mb-3">
@@ -217,21 +217,21 @@
                             <div class="col-md-4">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">This Month's Bill</div>
-                                    <div class="fs-4 fw-bold">{{ $latestBill ? '$' . number_format($latestBill->total, 0) : '—' }}</div>
+                                    <div class="fs-4 fw-bold">{{ $latestBill ? '৳' . number_format($latestBill->total, 0) : '—' }}</div>
                                     <div class="text-muted small">{{ $latestBill ? $latestBill->period->format('F Y') : 'No bills yet' }}</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Total Billed</div>
-                                    <div class="fs-4 fw-bold">${{ number_format($totalBilled, 0) }}</div>
+                                    <div class="fs-4 fw-bold">৳{{ number_format($totalBilled, 0) }}</div>
                                     <div class="text-muted small">{{ $bills->count() }} {{ Str::plural('bill', $bills->count()) }}</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Outstanding</div>
-                                    <div class="fs-4 fw-bold text-danger">${{ number_format($outstanding, 0) }}</div>
+                                    <div class="fs-4 fw-bold text-danger">৳{{ number_format($outstanding, 0) }}</div>
                                     <div class="text-muted small">{{ $unpaidCount }} unpaid {{ Str::plural('bill', $unpaidCount) }}</div>
                                 </div>
                             </div>
@@ -255,10 +255,10 @@
                                     <tr>
                                         <th scope="row">{{ $loop->iteration }}</th>
                                         <td>{{ $bill->period->format('F Y') }}</td>
-                                        <td>${{ number_format($bill->rent, 0) }}</td>
-                                        <td>${{ number_format($bill->water, 0) }}</td>
-                                        <td>${{ number_format($bill->electricity, 0) }}</td>
-                                        <td class="fw-bold">${{ number_format($bill->total, 0) }}</td>
+                                        <td>৳{{ number_format($bill->rent, 0) }}</td>
+                                        <td>৳{{ number_format($bill->water, 0) }}</td>
+                                        <td>৳{{ number_format($bill->electricity, 0) }}</td>
+                                        <td class="fw-bold">৳{{ number_format($bill->total, 0) }}</td>
                                         <td>
                                             @if ($bill->status === 'paid')
                                                 <span class="badge bg-success">Paid</span>
@@ -273,10 +273,10 @@
                                                     $waPhone = $house->whatsappPhone();
                                                     $waText = 'Hi ' . $house->name . ",\n"
                                                         . 'Your bill for ' . $bill->period->format('F Y')
-                                                        . ' is $' . number_format($bill->total, 0)
-                                                        . ' (Rent $' . number_format($bill->rent, 0)
-                                                        . ' + Water $' . number_format($bill->water, 0)
-                                                        . ' + Electricity $' . number_format($bill->electricity, 0) . '). '
+                                                        . ' is ৳' . number_format($bill->total, 0)
+                                                        . ' (Rent ৳' . number_format($bill->rent, 0)
+                                                        . ' + Water ৳' . number_format($bill->water, 0)
+                                                        . ' + Electricity ৳' . number_format($bill->electricity, 0) . '). '
                                                         . ($bill->status === 'paid'
                                                             ? 'Payment received.'
                                                             : 'Kindly clear the outstanding amount.')
@@ -334,14 +334,14 @@
                             <div class="col-md-4">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Total Paid</div>
-                                    <div class="fs-4 fw-bold text-success">${{ number_format($totalPaid, 0) }}</div>
+                                    <div class="fs-4 fw-bold text-success">৳{{ number_format($totalPaid, 0) }}</div>
                                     <div class="text-muted small">{{ $paidCount }} {{ Str::plural('payment', $paidCount) }}</div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Outstanding Balance</div>
-                                    <div class="fs-4 fw-bold text-danger">${{ number_format($outstanding, 0) }}</div>
+                                    <div class="fs-4 fw-bold text-danger">৳{{ number_format($outstanding, 0) }}</div>
                                     <div class="text-muted small">{{ $unpaidCount }} unpaid {{ Str::plural('bill', $unpaidCount) }}</div>
                                 </div>
                             </div>
@@ -349,7 +349,7 @@
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Next Due</div>
                                     <div class="fs-4 fw-bold">{{ $nextDue ? ($nextDue->due_date ? $nextDue->due_date->format('d M Y') : $nextDue->period->format('d M Y')) : '—' }}</div>
-                                    <div class="text-muted small">{{ $nextDue ? $nextDue->period->format('F Y') . ' · $' . number_format($nextDue->total, 0) : 'Nothing due' }}</div>
+                                    <div class="text-muted small">{{ $nextDue ? $nextDue->period->format('F Y') . ' · ৳' . number_format($nextDue->total, 0) : 'Nothing due' }}</div>
                                 </div>
                             </div>
                         </div>
@@ -380,10 +380,10 @@
                                         <th scope="row">{{ $loop->iteration }}</th>
                                         <td>{{ optional($bill->paid_at)->format('d M Y') ?: '—' }}</td>
                                         <td>{{ $bill->period->format('F Y') }}</td>
-                                        <td class="fw-bold">${{ number_format($bill->total, 0) }}</td>
-                                        <td>${{ number_format($cashPaid, 0) }}</td>
-                                        <td>{!! $advUsed > 0 ? '<span class="text-primary fw-semibold">−$' . number_format($advUsed, 0) . '</span>' : '<span class="text-muted">—</span>' !!}</td>
-                                        <td>{!! $depUsed > 0 ? '<span class="text-info fw-semibold">−$' . number_format($depUsed, 0) . '</span>' : '<span class="text-muted">—</span>' !!}</td>
+                                        <td class="fw-bold">৳{{ number_format($bill->total, 0) }}</td>
+                                        <td>৳{{ number_format($cashPaid, 0) }}</td>
+                                        <td>{!! $advUsed > 0 ? '<span class="text-primary fw-semibold">−৳' . number_format($advUsed, 0) . '</span>' : '<span class="text-muted">—</span>' !!}</td>
+                                        <td>{!! $depUsed > 0 ? '<span class="text-info fw-semibold">−৳' . number_format($depUsed, 0) . '</span>' : '<span class="text-muted">—</span>' !!}</td>
                                         <td>{{ $bill->method ?: '—' }}</td>
                                         <td><span class="badge bg-success">Paid</span></td>
                                         <td class="text-end">
@@ -418,28 +418,28 @@
                             <div class="col-md-3">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Advance Balance</div>
-                                    <div class="fs-4 fw-bold text-success">${{ number_format($house->advance_amount, 0) }}</div>
+                                    <div class="fs-4 fw-bold text-success">৳{{ number_format($house->advance_amount, 0) }}</div>
                                     <div class="text-muted small">Credit available</div>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Security Deposit</div>
-                                    <div class="fs-4 fw-bold">${{ number_format($house->security_deposit, 0) }}</div>
+                                    <div class="fs-4 fw-bold">৳{{ number_format($house->security_deposit, 0) }}</div>
                                     <div class="text-muted small">Refundable</div>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Total Received</div>
-                                    <div class="fs-4 fw-bold text-success">${{ number_format($totalReceived, 0) }}</div>
+                                    <div class="fs-4 fw-bold text-success">৳{{ number_format($totalReceived, 0) }}</div>
                                     <div class="text-muted small">{{ $advanceTransactions->count() }} {{ Str::plural('top-up', $advanceTransactions->count()) }}</div>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="border rounded p-3 h-100">
                                     <div class="text-muted small text-uppercase">Applied to Bills</div>
-                                    <div class="fs-4 fw-bold text-info">${{ number_format($totalApplied, 0) }}</div>
+                                    <div class="fs-4 fw-bold text-info">৳{{ number_format($totalApplied, 0) }}</div>
                                     <div class="text-muted small">{{ $deductionBills->count() }} {{ Str::plural('bill', $deductionBills->count()) }} settled</div>
                                 </div>
                             </div>
@@ -471,7 +471,7 @@
                                                 <span class="badge bg-primary">Advance</span>
                                             @endif
                                         </td>
-                                        <td class="fw-semibold text-success">+${{ number_format($tx->amount, 0) }}</td>
+                                        <td class="fw-semibold text-success">+৳{{ number_format($tx->amount, 0) }}</td>
                                         <td>{{ $tx->method ?: '—' }}</td>
                                         <td>{{ $tx->reference ?: '—' }}</td>
                                         <td>{{ $tx->note ?: '—' }}</td>
@@ -516,14 +516,14 @@
                                         <td>{{ $bill->period->format('F Y') }}</td>
                                         <td>
                                             @if ((float) $bill->advance_used > 0)
-                                                <span class="fw-semibold text-primary">−${{ number_format($bill->advance_used, 0) }}</span>
+                                                <span class="fw-semibold text-primary">−৳{{ number_format($bill->advance_used, 0) }}</span>
                                             @else
                                                 <span class="text-muted">—</span>
                                             @endif
                                         </td>
                                         <td>
                                             @if ((float) $bill->deposit_used > 0)
-                                                <span class="fw-semibold text-info">−${{ number_format($bill->deposit_used, 0) }}</span>
+                                                <span class="fw-semibold text-info">−৳{{ number_format($bill->deposit_used, 0) }}</span>
                                             @else
                                                 <span class="text-muted">—</span>
                                             @endif
@@ -585,7 +585,7 @@
                             </div>
                             <p class="text-muted small mb-2">Deducts from the renter's advance credit.</p>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">৳</span>
                                 <input type="number" name="advance_used" id="payAdvanceInput"
                                     class="form-control" min="0" step="0.01" value="0" placeholder="0">
                                 <button type="button" class="btn btn-outline-primary" id="payAdvanceMax">Use Max</button>
@@ -601,7 +601,7 @@
                             </div>
                             <p class="text-muted small mb-2">Deducts from the refundable deposit held.</p>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">৳</span>
                                 <input type="number" name="deposit_used" id="payDepositInput"
                                     class="form-control" min="0" step="0.01" value="0" placeholder="0">
                                 <button type="button" class="btn btn-outline-info" id="payDepositMax">Use Max</button>
@@ -668,7 +668,7 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Amount <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">৳</span>
                                 <input type="number" name="amount" class="form-control" min="0.01" step="0.01"
                                     value="{{ old('amount') }}" placeholder="Enter amount received" required>
                             </div>
@@ -743,14 +743,14 @@
                             <div class="col-6 mb-3">
                                 <label class="form-label">Rent (fixed)</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">$</span>
+                                    <span class="input-group-text">৳</span>
                                     <input type="number" id="billRent" class="form-control" value="{{ (int) $house->rent_amount }}" readonly>
                                 </div>
                             </div>
                             <div class="col-6 mb-3">
                                 <label class="form-label">Water / WASA (fixed)</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">$</span>
+                                    <span class="input-group-text">৳</span>
                                     <input type="number" id="billWater" class="form-control" value="{{ (int) $house->water_amount }}" readonly>
                                 </div>
                             </div>
@@ -758,14 +758,14 @@
                         <div class="mb-3">
                             <label class="form-label">Electricity (varies)</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">৳</span>
                                 <input type="number" id="billElectric" name="electricity" class="form-control" min="0" step="0.01" value="{{ old('electricity') }}" placeholder="Enter this month's amount" required>
                             </div>
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="fw-bold">Total Bill</span>
-                            <span class="fs-4 fw-bold text-primary" id="billTotal">$0</span>
+                            <span class="fs-4 fw-bold text-primary" id="billTotal">৳0</span>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -789,7 +789,7 @@
                 const sum = (parseFloat(rent.value) || 0)
                           + (parseFloat(water.value) || 0)
                           + (parseFloat(electric.value) || 0);
-                total.textContent = '$' + sum.toLocaleString(undefined, { maximumFractionDigits: 2 });
+                total.textContent = '৳' + sum.toLocaleString(undefined, { maximumFractionDigits: 2 });
             }
 
             if (electric) {
@@ -807,7 +807,7 @@
             let   payAdvanceAvail = 0;
             let   payDepositAvail = 0;
 
-            const money = n => '$' + n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+            const money = n => '৳' + n.toLocaleString(undefined, { maximumFractionDigits: 0 });
 
             if (payModal) {
                 payAdvanceAvail = parseFloat(payModal.dataset.advanceAvailable) || 0;

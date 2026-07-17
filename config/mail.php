@@ -115,4 +115,18 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Contact Form Recipient
+    |--------------------------------------------------------------------------
+    |
+    | Contact form submissions are stored in the database and a notification
+    | email is sent to this address.
+    |
+    */
+
+    'contact' => [
+        'to' => env('CONTACT_TO_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+    ],
+
 ];
